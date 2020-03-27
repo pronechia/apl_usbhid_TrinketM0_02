@@ -100,11 +100,11 @@ void sub_out_kbd(int8_t p_ctl) {
     //ラベルと値を出力する
     sub_moji_tab("Temprature");
     //センサー値を得る
-    w_temp =  BME280temperature(); //xx.xx度
+    w_temp = (int32_t)(mySensor.readTempC() * 100); //xx.xx度をxxxxに変換
     if (w_temp > 9999) sprintf(w_buf, "100.00");
     else {
       w_temp2 = w_temp - (w_temp / 100 * 100);
-      sprintf(w_buf, "%d.%02d", w_temp / 100 ,w_temp2);
+      sprintf(w_buf, "%d.%02d", w_temp / 100, w_temp2);
     }
     sub_moji_tab(w_buf);
     sub_moji_tab("C");
@@ -116,8 +116,14 @@ void sub_out_kbd(int8_t p_ctl) {
 //
 void sub_initurl() {
     
+#ifdef USBHOST_WINPC
   //Windows-KEY + r　でcmd窓を出す
   sub_kbd_withmodifire(KEY_LEFT_GUI, 'r');
+#endif
+#ifdef USBHOST_MAC
+  //ブラウザーが表示されていること。URL入力エリアをフォーカスする
+  sub_kbd_withmodifire(KEY_LEFT_GUI, 'l');
+#endif
   delay(WCS_DELAY_T1);
   //URL文字出力
   sub_kbd_print((char *)g_url_string.c_str());
@@ -151,7 +157,16 @@ void sub_kbd_print(char *p_moji) {
 void sub_kbd_strok(uint8_t p_char) {
 
   if (p_char == KEY_TAB) {
+#ifdef USBHOST_WINPC
     Keyboard.write(KEY_TAB);
+#endif
+#ifdef USBHOST_MAC
+    Keyboard.press(KEY_LEFT_ALT);
+    delay(WCS_DELAY_MOJI);
+    Keyboard.write(KEY_TAB);
+    delay(WCS_DELAY_MOJI);
+    Keyboard.release(KEY_LEFT_ALT);
+#endif
   } else {
     Keyboard.press(p_char);
     Keyboard.release(p_char);
