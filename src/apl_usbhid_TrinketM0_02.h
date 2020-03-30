@@ -4,7 +4,9 @@
 #include "Keyboard.h"
 #include <Wire.h>
 #include "SparkFunBME280.h"
-#define BME280DEVADDR 0x76
+//環境に合わせてどちらかを選択すること
+//#define BME280DEVADDR 0x76
+//#define BME280DEVADDR 0x77
 #define LED_PIN 13
 #define SW_PIN  1
 #define WCS_DELAY_T1 150 //T1 ブラウザー応答時間150

@@ -3,8 +3,8 @@
  * 2020/03/25 Windows/MAC対応
  */
 //どちらか選択せよ -- Windows or MAC -------------------------------------
-#define USBHOST_WINPC
-//#define USBHOST_MAC
+//#define USBHOST_WINPC
+#define USBHOST_MAC
 
 #include "apl_usbhid_TrinketM0_02.h"
 
@@ -17,6 +17,7 @@ void setup(){
   sub_fw_Blink(LED_PIN, 3, 50); //動き始めたことを知らせる
   digitalWrite(LED_PIN, HIGH);  //明確に点灯
   mySensor.setI2CAddress(BME280DEVADDR);
+  //BME280の初期化ができない場合、LED点滅して先に進まない
   if (mySensor.beginI2C() == false) {
     while (1) sub_fw_Blink(LED_PIN, 10, 500); //異常
   }
