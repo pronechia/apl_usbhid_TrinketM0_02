@@ -2,6 +2,7 @@
  *公開第二回）リアルタイムモニター
  * 2020/04/01 Windows/MAC
  * 2020/04/03 ライブラリを分離。設定説明追記
+ * 2020/04/10 I2Cエラー時も動かすが値ゼロ。URL入力後、TABを出す、Chrome動作確認
  */
 // Mac用
 
@@ -26,7 +27,9 @@ String g_url_string = "http'//localhost/example0201.htm"; //localhost用
 
 BME280 mySensor;
 int16_t g_pass;  //HID出力したら後の待ち時間を制御する。 pass1=20msec pass2=40msec ...
+boolean g_I2CNormal;
 volatile int g_i; //timerカウント
+
 //
 //
 //
@@ -34,15 +37,15 @@ void setup(){
   pinMode(LED_PIN,OUTPUT);
   pinMode(SW_PIN, INPUT_PULLUP);
   Wire.begin();
+  //sub_kbd_begin(1);  //Windows用に初期化
   sub_kbd_begin(2);  //Mac用に初期化
   delay(100); //HIDデバイス、I2Cデバイスの初期化待ち
   sub_fw_Blink(LED_PIN, 3, 50); //動き始めたことを知らせる
   digitalWrite(LED_PIN, HIGH);  //明確に点灯
   mySensor.setI2CAddress(BME280DEVADDR);
-  //BME280の初期化ができない場合、LED点滅して先に進まない
-  if (mySensor.beginI2C() == false) {
-    while (1) sub_fw_Blink(LED_PIN, 10, 500); //異常
-  }
+  //BME280の初期化ができない場合、値ゼロで動かす
+  if (mySensor.beginI2C() == false) g_I2CNormal = false;
+  else                              g_I2CNormal = true;
   g_pass = 1;
   g_i = 0;
   while (sub_fw_SWcheck(SW_PIN) == 0); //SWが押されるまで待つ
@@ -110,11 +113,15 @@ void sub_out_kbd(int8_t p_ctl) {
     //ラベルと値を出力する
     sub_moji_tab("Temprature");
     //センサー値を得る
-    w_temp = (int32_t)(mySensor.readTempC() * 100); //xx.xx度をxxxxに変換
-    if (w_temp > 9999) sprintf(w_buf, "100.00");
-    else {
-      w_temp2 = w_temp - (w_temp / 100 * 100);
-      sprintf(w_buf, "%d.%02d", w_temp / 100, w_temp2);
+    if (g_I2CNormal == true) {
+      w_temp = (int32_t)(mySensor.readTempC() * 100); //xx.xx度をxxxxに変換
+      if (w_temp > 9999) sprintf(w_buf, "100.00");
+      else {
+        w_temp2 = w_temp - (w_temp / 100 * 100);
+        sprintf(w_buf, "%d.%02d", w_temp / 100, w_temp2);
+      }
+    } else {
+      sprintf(w_buf, "0.0");
     }
     sub_moji_tab(w_buf);
     sub_moji_tab("C");
@@ -133,6 +140,7 @@ void sub_initurl() {
   sub_kbd_strok(KEY_RETURN);
   //
   delay(WCS_DELAY_GAMEN); //画面が表示されるまで、十分の時間待つ
+  sub_kbd_strok(KEY_TAB);
 }
 //タイマー割込み関数
 void sub_timer_callback() {
